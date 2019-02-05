@@ -158,10 +158,18 @@ function captureAndMatch(options) {
 
   return captureAudio(options.captureDuration*1000)
   .then(capture => {
+    let shine = new Shine({
+      samplerate: capture.sampleRate,
+      bitrate: 128,
+      channels: capture.channels.length,
+      mode: Shine.STEREO
+    });
+    let mp3Blob = new Blob([shine.encode(capture.channels), shine.close()]);
+
     return Promise.all(validMatchers.map(m => {
       return (
         // assign source matcher, matches and convert catches to errors
-        m.match(options[m.name], capture)
+        m.match(options[m.name], mp3Blob)
         .then(r => Object.assign({matches: r, matcher: m}))
         // e.message to convert error object to string
         .catch(e => Object.assign({error: (e.message || e), matcher: m}))
